@@ -1,0 +1,33 @@
+{
+	"ImportPath": "awesomeProject",
+	"GoVersion": "go1.10",
+	"GodepVersion": "v80",
+	"Deps": [
+		{
+			"ImportPath": "github.com/gorilla/mux",
+			"Comment": "v1.6.1-14-g94231ff",
+			"Rev": "94231ffd98496cbcb1c15b7bf2a9edfd5f852cd4"
+		},
+		{
+			"ImportPath": "github.com/sirupsen/logrus",
+			"Comment": "v1.0.5-16-g778f2e7",
+			"Rev": "778f2e774c725116edbc3d039dc0dfc1cc62aae8"
+		},
+		{
+			"ImportPath": "github.com/yunabe/easycsv",
+			"Rev": "c14aca53ce348689c11bc34f64fb588dc45db09d"
+		},
+		{
+			"ImportPath": "golang.org/x/crypto/ssh/terminal",
+			"Rev": "beb2a9779c3b677077c41673505f150149fce895"
+		},
+		{
+			"ImportPath": "golang.org/x/sys/unix",
+			"Rev": "3b87a42e500a6dc65dae1a55d0b641295971163e"
+		},
+		{
+			"ImportPath": "golang.org/x/sys/windows",
+			"Rev": "3b87a42e500a6dc65dae1a55d0b641295971163e"
+		}
+	]
+}
