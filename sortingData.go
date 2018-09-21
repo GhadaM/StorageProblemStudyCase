@@ -1,36 +1,39 @@
 package main
 
 import (
+	"os"
+	"encoding/csv"
 	"sync"
-	"fmt"
-	"time"
-	"net/http"
-	"strconv"
 )
 
-var waitGroup sync.WaitGroup
-var data chan string
-
-type chanelRes struct {
-	Values *Record
-	Id     string
-	error  error
-}
-
-func LoadData(w http.ResponseWriter, r *http.Request) {
-	//var structResult chanelRes
-	fmt.Println("waiting ")
-	time.Sleep(10 * time.Millisecond)
-	ReadCSV()
-}
-
-func LoadedDataStoring(cols map[string]int, record []string) (*Record, error) {
-	var r = Record{}
-	col := cols["id"]
-	id  ,err := strconv.Atoi(record[col])
-	if err != nil {
-		return nil , err
+// storeDataPerMonth loops through the map that contains the original csv file
+// and separates the entries based on the month of the expiration date
+func storeDataPerMonth(listMonths map[string][][]string) {
+	var wg sync.WaitGroup
+	var monthList = []string{"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"}
+	for _, month := range monthList {
+		if listMonths[month] != nil {
+			wg.Add(1)
+			 go saveMonth(&wg , month, listMonths[month])
+		}
 	}
-	fmt.Println("kfp ", id )
-	return  &r , nil
+	wg.Wait()
+}
+
+// go routine for saving a month's data into its own csv file
+func saveMonth(wg *sync.WaitGroup,month string, currentMonth [][]string) {
+	defer wg.Done()
+	var monthFileName = "./csvFiles/" + month + ".csv "
+	file, err := os.Create(monthFileName)
+	if err != nil {
+		logger.Error("saveMonth Cannot create file", err)
+	}
+	defer file.Close()
+	writer := csv.NewWriter(file)
+	writer.Comma = ';'
+	err = writer.WriteAll(currentMonth)
+	if err != nil {
+		logger.Error("saveMonth Cannot create file", err)
+	}
+	defer writer.Flush()
 }

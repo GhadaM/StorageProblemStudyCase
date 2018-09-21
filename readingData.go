@@ -5,48 +5,49 @@ import (
 	"encoding/csv"
 	"io"
 	"fmt"
+	"time"
 )
 
-type Record struct {
-	Id              string
-	Price           float64
-	Expiration_date string
-}
-
-//
 // ReadCSV will read our initial csv file and store it in an object
-//
-func ReadCSV() ( error) {
-	// open file
-	csvfile, err := os.Open("ids.csv")
+func GetInitialData() {
+	var listMonths = make(map[string][][]string)
+	file, err := os.Open("ids.csv")
 	if err != nil {
-		logger.Error(err)
-		return err
+		logger.Errorf("readCsvFile Error:", err.Error())
 	}
-	defer csvfile.Close()
-
-	//parse csv file
-	reader := csv.NewReader(csvfile)
-	cols := make(map[string]int)
-	for rowCount := 0 ; ; rowCount++{
+	// automatically call Close() at the end of current method
+	defer file.Close()
+	//
+	reader := csv.NewReader(file)
+	reader.Comma = ';'
+	lineCount := 0
+	for {
+		// read just one record
 		record, err := reader.Read()
+		// end-of-file is fitted into err
 		if err == io.EOF {
 			break
-		}else if err != nil {
-			logger.Error(err)
-			return err
+		} else if err != nil {
+			fmt.Println("GetInitialData Error:", err)
+			return
 		}
-		if rowCount==0{
-			for index , col := range record{
-				cols[col]= index
-			}
-		}else {
-			rec, err := LoadedDataStoring(cols,record)
-			if err != nil {
-				logger.Errorf(err.Error())
-			}
-			fmt.Println(rec)
-		}
+		// record is an array of string so is directly printable
+		listMonths = getMonth(listMonths, record)
+		lineCount += 1
 	}
-	return  nil
+	storeDataPerMonth(listMonths)
+}
+
+// getMonth out of the expiration date and add the current
+// input into its corresponding map according to the month
+func getMonth(listMonths map[string][][]string, record []string) (map[string][][]string) {
+	t, err := time.Parse("2006-01-02", record[2][0:10])
+	if err != nil {
+		logger.Error("parsing time ", err)
+	}
+	month := t.Month().String()
+	var array = listMonths[month]
+	array = append(array, record)
+	listMonths[month] = array
+	return listMonths
 }
