@@ -28,6 +28,12 @@ func elapsed() func() {
 }
 
 func main() {
+	//go func() {
+	//	c := time.Tick(30 * time.Minute)
+	//	for range c {
+	//		GetInitialData()
+	//	}
+	//}()
 	r := mux.NewRouter()
 	http.Handle("/", r)
 	r.Methods("GET").Path("/loadFile").Name("Load").HandlerFunc(GetInitialData)
