@@ -16,6 +16,8 @@ type channelFiles struct {
 	Id     string
 }
 
+// GetRecordById takes ID from parameters and call function readDirectoryFiles to find it
+// calls the template for display
 func GetRecordById(w http.ResponseWriter, r *http.Request) {
 	defer elapsed()()
 	vars := mux.Vars(r)
@@ -28,6 +30,10 @@ func GetRecordById(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// readDirectoryFiles load file in a directory
+// and call a go routine to read each file
+// giving an ID in the parameter it returns either the record for this ID
+// or not found
 func readDirectoryFiles(idToLookFor string) (result string) {
 	var asyncWaitGroup = sync.WaitGroup{}
 	var monthValues = make(map[string][][]string)
@@ -60,6 +66,8 @@ func readDirectoryFiles(idToLookFor string) (result string) {
 	}
 	return
 }
+
+// loopThroughFile goroutine reads csv  file and adds it to channel
 func loopThroughFile(file os.FileInfo, files chan channelFiles) {
 	var filesChan channelFiles
 	var fileValues [][]string

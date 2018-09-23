@@ -20,6 +20,7 @@ func init() {
 		logger.Error("Init : couldn't parse files in template", err)
 	}
 }
+// calculates execution time
 func elapsed() func() {
 	start := time.Now()
 	return func() {

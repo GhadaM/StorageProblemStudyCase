@@ -38,6 +38,7 @@ func GetInitialData(w http.ResponseWriter, r *http.Request) {
 		lineCount += 1
 	}
 	storeDataPerMonth(listMonths)
+	logger.Info("done loading")
 }
 
 // getMonth out of the expiration date and add the current
