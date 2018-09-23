@@ -6,10 +6,12 @@ import (
 	"io"
 	"fmt"
 	"time"
+	"net/http"
 )
 
 // ReadCSV will read our initial csv file and store it in an object
-func GetInitialData() {
+func GetInitialData(w http.ResponseWriter, r *http.Request) {
+	defer elapsed()()
 	var listMonths = make(map[string][][]string)
 	file, err := os.Open("ids.csv")
 	if err != nil {
@@ -17,7 +19,7 @@ func GetInitialData() {
 	}
 	// automatically call Close() at the end of current method
 	defer file.Close()
-	//
+
 	reader := csv.NewReader(file)
 	reader.Comma = ';'
 	lineCount := 0

@@ -4,53 +4,90 @@ import (
 	"io"
 	"os"
 	"encoding/csv"
-	"fmt"
 	"io/ioutil"
+	"net/http"
+	"github.com/gorilla/mux"
+	"sync"
 	"strings"
 )
 
-type promotion struct {
-	ID string
+type channelFiles struct {
+	Values [][]string
+	Id     string
 }
 
-func getRecordById(id string) (result string) {
+func GetRecordById(w http.ResponseWriter, r *http.Request) {
+	defer elapsed()()
+	vars := mux.Vars(r)
+	id := vars["id"]
+	result := readDirectoryFiles(id)
+	w.Header().Set("Content-Type", "text/html")
+	err := tpl.ExecuteTemplate(w, "index.html", result)
+	if err != nil {
+		logger.Error("couldn't execute template", err)
+	}
+}
+
+func readDirectoryFiles(idToLookFor string) (result string) {
+	var asyncWaitGroup = sync.WaitGroup{}
+	var monthValues = make(map[string][][]string)
 	result = "Not Found"
 	files, err := ioutil.ReadDir("./csvFiles/")
 	if err != nil {
 		logger.Error("getRecordById: Directory", err)
 	}
-
-	for _, f := range files {
-		if f.Size() != 0 {
-			fmt.Println(f.Name())
-			file, err := os.Open("./csvFiles/"+f.Name())
-			if err != nil {
-				logger.Errorf("readCsvFile Error:", err.Error())
-			}
-			// automatically call Close() at the end of current method
-			defer file.Close()
-			//
-			reader := csv.NewReader(file)
-			reader.Comma = ';'
-			for {
-				// read just one record
-				record, err := reader.Read()
-				// end-of-file is fitted into err
-				if err == io.EOF {
-					break
-				} else if err != nil {
-					logger.Error("getRecordById: File", err)
-					return
-				}
-				if record[0] == id {
-					fmt.Println("got it ")
-					fmt.Println(record)
-					result = strings.Join(record, " , ")
-				}
+	asyncWaitGroup.Add(len(files))
+	filesChan := make(chan channelFiles, len(files))
+	go func() {
+		asyncWaitGroup.Wait()
+		close(filesChan)
+	}()
+	for _, file := range files {
+		go loopThroughFile(file, filesChan)
+	}
+	for channelItem := range filesChan {
+		monthValues[channelItem.Id] = channelItem.Values
+		asyncWaitGroup.Done()
+	}
+	var resultList = make(map[string]string)
+	for month, monthValue := range monthValues {
+		resultList[month] = result
+		for _, record := range monthValue {
+			if record[0] == idToLookFor {
+				result = strings.Join(record, " , ")
 			}
 		}
 	}
 	return
 }
+func loopThroughFile(file os.FileInfo, files chan channelFiles) {
+	var filesChan channelFiles
+	var fileValues [][]string
+	if file.Size() != 0 {
+		file, err := os.Open("./csvFiles/" + file.Name())
+		if err != nil {
+			logger.Errorf("readCsvFile Error:", err.Error())
+		}
+		// automatically call Close() at the end of current method
+		defer file.Close()
+		//
+		reader := csv.NewReader(file)
+		reader.Comma = ';'
+		for {
+			// read just one record
+			record, err := reader.Read()
+			// end-of-file is fitted into err
+			if err == io.EOF {
+				break
+			} else if err != nil {
+				logger.Error("getRecordById: File", err)
+				return
+			}
+			fileValues = append(fileValues, record)
+		}
+	}
+	filesChan.Values = fileValues
+	filesChan.Id = file.Name()
+	files <- filesChan
 
-// it should be used with local host
+}
